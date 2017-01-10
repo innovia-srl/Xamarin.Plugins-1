@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Plugin.Messaging
 {
@@ -57,8 +58,13 @@ namespace Plugin.Messaging
         public EmailMessageBuilder WithAttachment(string filePath, string contentType)
         {
 #if WINDOWS_PHONE_APP || WINDOWS_UWP
-            throw new PlatformNotSupportedException("API not supported on platform. Use EmailMessageBuilder.WithAttachment(Windows.Storage.IStorageFile file) overload instead");
 
+            var tf = Task.Run(async () => await Windows.Storage.StorageFile.GetFileFromPathAsync(filePath));
+            tf.Wait();
+            var file = tf.Result;
+
+            _email.Attachments.Add(new EmailAttachment(file));
+            return this;
 #elif __ANDROID__ || __IOS__
             _email.Attachments.Add(new EmailAttachment(filePath, contentType));
             return this;
